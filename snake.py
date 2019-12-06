@@ -263,10 +263,11 @@ class Snake:
             scores['win'] =- 999999999 # huge bonus if the given snake is a winner
             scores['age'] =+ len(self.trace) # tiny penalty for taking a long time
         else:
-            scores['size'] =- 1136 * self.size # large bonus for having a longer snake = closer to winning
-            scores['grow'] =- 568 * self.grow # slightly smaller bonus for pending growth
+            scores['size'] =- 4000 * self.size # large bonus for having a longer snake = closer to winning
+            scores['grow'] =- 2000 * self.grow # slightly smaller bonus for pending growth
 
-            scores['dist'] =+ 153 * (sum(abs(self.nfruit - self.nhead)) if self.fruit else 0)
+            # distance is as fraction of possible distance, so larger grids aren't penalized aggressively
+            scores['dist'] =+ 5000 * (sum(abs(self.nfruit - self.nhead)) if self.fruit else 0) // (Game.WIDTH + Game.HEIGHT)
             
             scores['age'] =+ len(self.trace) # tiny penalty for taking a long time
             
@@ -274,18 +275,18 @@ class Snake:
                 canyons = (self.grid > Cell.H).astype(int) # get empty spaces including head as zeroes
                 canyons = (black_tophat(canyons, structure=[[1,1],[1,1]], mode='constant', cval=1)==1).astype(int) # black_tophat == 1 to isolate canyons
                 num_canyons = label(canyons, output=canyons) # return value of inplace label is number of labels
-                scores['canyon'] =+ 153 * num_canyons
+                scores['canyon'] =+ 150 * num_canyons
                 
             if True: # penalize for empty cells in regions disconnected from the head
                 discon = (self.grid <= Cell.H).astype(int) # get empty spaces including head as ones
                 flood_fill(discon, self.head, 0, connectivity=1, inplace=True) # flood fill empty space from head location
                 num_discon = discon.sum() # anywhere that's still a one is disconnected
-                scores['discon'] =+ 12 * num_discon
+                scores['discon'] =+ 15 * num_discon
 
             if True: # penalize for number of disconnected empty segments
                 segment = (self.grid <= Cell.F).astype(int) # get empty spaces excluding head as ones
                 num_segment = label(segment, output=segment)
-                scores['segment'] =+ 153 * num_segment
+                scores['segment'] =+ 150 * num_segment
             
         return scores
 
@@ -417,7 +418,7 @@ class Search:
     def search_n(self, n:int, progress:bool=True) -> None:
         it = range(n)
         if progress:
-            it = tqdm(it)
+            it = tqdm(it, desc="searching")
         for i in it:
             self.search_one()
     
@@ -467,7 +468,8 @@ class Report:
         return IMG_HTML(filename)
 
     def save_gif(self, filename=f'gifs/{str(uuid.uuid4())}.gif', **kwargs):
-        im = [s.as_image() for s in self.search.replay(snake=self.snake)]
+        snakes = list(self.search.replay(snake=self.snake))
+        im = [s.as_image() for s in tqdm(snakes, desc="rendering")]
         im[0].save(filename, save_all=True, append_images=([im[0]]*3+im+[im[-1]]*4), **kwargs)
         return IMG_HTML(filename)
 
