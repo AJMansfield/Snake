@@ -18,7 +18,6 @@ from scipy.ndimage.morphology import black_tophat
 from scipy.ndimage import label
 from skimage.morphology import flood_fill
 
-from copy import copy, deepcopy
 from typing import List, Tuple, Iterable, Optional, Iterator
 from PIL import Image
 import uuid
