@@ -19,4 +19,4 @@ Pillow
 tqdm
 ```
 
-
+I've also got a gallery of 143 earlier animations I generated while I was testing it: https://imgur.com/gallery/lRj9B4f
